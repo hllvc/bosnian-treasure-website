@@ -502,7 +502,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   card.classList.add('deep-linked');
                   setTimeout(function() {
                     card.classList.remove('deep-linked');
-                  }, 800);
+                  }, 1800);
                 }
               }
             }, 200);
@@ -535,6 +535,71 @@ document.addEventListener('DOMContentLoaded', function() {
     if (targetIndex !== null) {
       swiper.slideTo(targetIndex, 400);
     }
+  });
+
+  // =====================
+  // Pagination Drag Scrubber
+  // =====================
+
+  const pagination = document.querySelector('.swiper-pagination');
+  let isDraggingPagination = false;
+
+  function getSlideIndexFromX(clientX) {
+    const bullets = pagination.querySelectorAll('.swiper-pagination-bullet');
+    if (!bullets.length) return 0;
+
+    const rect = pagination.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const relativeX = clientX - centerX;
+
+    // Sensitivity multiplier - smaller number = less drag needed
+    const sensitivity = 0.5;
+    const effectiveWidth = rect.width * sensitivity;
+
+    // Map position to slide index
+    const normalized = (relativeX / effectiveWidth) + 0.5;
+    const index = Math.floor(normalized * bullets.length);
+    return Math.max(0, Math.min(index, bullets.length - 1));
+  }
+
+  function handlePaginationDrag(clientX) {
+    const index = getSlideIndexFromX(clientX);
+    if (index !== swiper.activeIndex) {
+      swiper.slideTo(index, 50);
+    }
+  }
+
+  // Touch events
+  pagination.addEventListener('touchstart', function(e) {
+    isDraggingPagination = true;
+    handlePaginationDrag(e.touches[0].clientX);
+  }, { passive: true });
+
+  pagination.addEventListener('touchmove', function(e) {
+    if (isDraggingPagination) {
+      handlePaginationDrag(e.touches[0].clientX);
+    }
+  }, { passive: true });
+
+  pagination.addEventListener('touchend', function() {
+    isDraggingPagination = false;
+  });
+
+  // Mouse events
+  pagination.addEventListener('mousedown', function(e) {
+    isDraggingPagination = true;
+    handlePaginationDrag(e.clientX);
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (isDraggingPagination) {
+      handlePaginationDrag(e.clientX);
+    }
+  });
+
+  document.addEventListener('mouseup', function() {
+    isDraggingPagination = false;
   });
 
   // Expose swiper instance for debugging
