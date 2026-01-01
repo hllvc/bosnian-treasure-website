@@ -351,12 +351,21 @@ document.addEventListener('DOMContentLoaded', function() {
         compactTimeoutId = setTimeout(function() {
           if (isSwipingToDismiss && !isCompacted && sourceCardRect) {
             isCompacted = true;
-            // Calculate uniform scale based on width
-            const compactScale = sourceCardRect.width / window.innerWidth;
             expandedCard.classList.remove('swiping');
             expandedCard.classList.add('swipe-start');
+
+            // Compact to minimal card size (centered on screen + drag offset)
+            const cardWidth = sourceCardRect.width;
+            const cardHeight = sourceCardRect.height;
+            const centerX = (window.innerWidth - cardWidth) / 2 + (swipeCurrentX - swipeStartX);
+            const centerY = (window.innerHeight - cardHeight) / 2 + (swipeCurrentY - swipeStartY);
+
+            expandedCard.style.width = cardWidth + 'px';
+            expandedCard.style.height = cardHeight + 'px';
+            expandedCard.style.left = centerX + 'px';
+            expandedCard.style.top = centerY + 'px';
             expandedCard.style.borderRadius = '1.5rem';
-            expandedCard.style.transform = `translate(${swipeCurrentX - swipeStartX}px, ${swipeCurrentY - swipeStartY}px) scale(${compactScale})`;
+            expandedCard.style.transform = '';
 
             // After compact animation, back to immediate response
             setTimeout(function() {
@@ -371,12 +380,16 @@ document.addEventListener('DOMContentLoaded', function() {
       if (swipeRafId) cancelAnimationFrame(swipeRafId);
       swipeRafId = requestAnimationFrame(function() {
         if (isCompacted && sourceCardRect) {
-          const compactScale = sourceCardRect.width / window.innerWidth;
-          expandedCard.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${compactScale})`;
-          expandedCard.style.borderRadius = '1.5rem';
+          // Move compact card by drag offset
+          const cardWidth = sourceCardRect.width;
+          const cardHeight = sourceCardRect.height;
+          const centerX = (window.innerWidth - cardWidth) / 2 + deltaX;
+          const centerY = (window.innerHeight - cardHeight) / 2 + deltaY;
+          expandedCard.style.left = centerX + 'px';
+          expandedCard.style.top = centerY + 'px';
         } else {
-          expandedCard.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1)`;
-          expandedCard.style.borderRadius = '0';
+          // Full screen card - use transform for position
+          expandedCard.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
         }
       });
     }
@@ -417,6 +430,10 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       // Snap back to full screen with bounce
       overlay.classList.add('animating');
+      expandedCard.style.width = '100%';
+      expandedCard.style.height = '100%';
+      expandedCard.style.top = '0';
+      expandedCard.style.left = '0';
       expandedCard.style.transform = '';
       expandedCard.style.borderRadius = '0';
 

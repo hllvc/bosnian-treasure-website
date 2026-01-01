@@ -323,7 +323,7 @@ body.no-scroll {
 
 /* Compact animation when dragging */
 .expanded-card.swipe-start {
-  transition: transform 0.2s ease-out, border-radius 0.2s ease-out;
+  transition: width 0.2s ease-out, height 0.2s ease-out, border-radius 0.2s ease-out;
 }
 
 /* Swiping state - no transition for immediate response */
@@ -412,30 +412,6 @@ body.no-scroll {
   pointer-events: none;
 }
 
-/* Blur layer */
-.expanded-content::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 250%;
-  z-index: -1;
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  -webkit-mask-image: linear-gradient(to top,
-    black 0%,
-    rgba(0, 0, 0, 0.8) 20%,
-    rgba(0, 0, 0, 0.5) 40%,
-    rgba(0, 0, 0, 0.2) 60%,
-    transparent 80%);
-  mask-image: linear-gradient(to top,
-    black 0%,
-    rgba(0, 0, 0, 0.8) 20%,
-    rgba(0, 0, 0, 0.5) 40%,
-    rgba(0, 0, 0, 0.2) 60%,
-    transparent 80%);
-}
 
 .expanded-content h2 {
   font-size: 1.75rem;
