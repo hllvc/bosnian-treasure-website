@@ -356,6 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
             isCompacted = true;
             expandedCard.classList.remove('swiping');
             expandedCard.classList.add('swipe-start');
+            expandedCard.classList.add('compacted');
 
             // Compact to minimal card size (centered on screen + drag offset)
             const cardWidth = sourceCardRect.width;
@@ -425,6 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     expandedCard.classList.remove('swiping');
     expandedCard.classList.remove('swipe-start');
+    expandedCard.classList.remove('compacted');
 
     // Close if dragged far enough (120px) or fast enough (velocity > 0.4)
     if (distance > 120 || velocity > 0.4) {

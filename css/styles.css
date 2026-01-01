@@ -34,21 +34,6 @@ header {
   flex-shrink: 0;
 }
 
-header::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 200%;
-  z-index: -1;
-  background: linear-gradient(to bottom,
-    rgba(0, 0, 0, 0.2) 0%,
-    rgba(0, 0, 0, 0.12) 30%,
-    rgba(0, 0, 0, 0.04) 60%,
-    transparent 100%);
-}
-
 header h1 {
   position: relative;
   font-size: 1.75rem;
@@ -190,21 +175,6 @@ footer {
   flex-shrink: 0;
 }
 
-footer::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 200%;
-  z-index: -1;
-  background: linear-gradient(to top,
-    rgba(0, 0, 0, 0.2) 0%,
-    rgba(0, 0, 0, 0.12) 30%,
-    rgba(0, 0, 0, 0.04) 60%,
-    transparent 100%);
-}
-
 footer p {
   position: relative;
   font-size: 0.875rem;
@@ -302,6 +272,24 @@ body.no-scroll {
               border-radius 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+/* Title animation during expansion */
+@keyframes expandTitle {
+  from {
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+  to {
+    font-size: 2rem;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.card-overlay.animating .expanded-card:not(.collapsing):not(.compacted):not(.swiping) .expanded-content h2 {
+  animation: expandTitle 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
 /* Compact animation when dragging */
 .expanded-card.swipe-start {
   transition: width 0.2s ease-out, height 0.2s ease-out, border-radius 0.2s ease-out;
@@ -319,19 +307,21 @@ body.no-scroll {
   padding: 1.25rem 1.25rem 2rem;
 }
 
-/* Match minimized card font when dragging or collapsing */
-.expanded-card.swiping .expanded-content h2,
-.expanded-card.swipe-start .expanded-content h2 {
+/* Match minimized card font when compacted or collapsing */
+.expanded-card.swipe-start .expanded-content h2,
+.expanded-card.compacted .expanded-content h2 {
   font-size: 1.5rem;
   font-weight: 600;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
   transition: none;
+  animation: none;
 }
 
 .expanded-card.collapsing .expanded-content h2 {
   font-size: 1.5rem;
   font-weight: 600;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  animation: none;
   transition: none;
 }
 
@@ -487,7 +477,7 @@ body.no-scroll {
 
 
 .expanded-content h2 {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 700;
   color: #ffffff;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
@@ -523,6 +513,26 @@ body.no-scroll {
   .card-title h2 {
     font-size: 1.75rem;
   }
+
+  .expanded-card.swipe-start .expanded-content h2,
+  .expanded-card.compacted .expanded-content h2,
+  .expanded-card.collapsing .expanded-content h2 {
+    font-size: 1.75rem;
+    animation: none;
+  }
+
+  @keyframes expandTitle {
+    from {
+      font-size: 1.75rem;
+      font-weight: 600;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    to {
+      font-size: 2rem;
+      font-weight: 700;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+  }
 }
 
 @media (min-width: 768px) {
@@ -545,11 +555,24 @@ body.no-scroll {
   }
 
   .expanded-content h2 {
-    font-size: 2rem;
+    font-size: 2.5rem;
   }
 
   .expanded-content p {
     font-size: 1.1rem;
+  }
+
+  @keyframes expandTitle {
+    from {
+      font-size: 1.75rem;
+      font-weight: 600;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    to {
+      font-size: 2.5rem;
+      font-weight: 700;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
   }
 }
 
@@ -581,6 +604,13 @@ body.no-scroll {
     font-size: 1.25rem;
   }
 
+  .expanded-card.swipe-start .expanded-content h2,
+  .expanded-card.compacted .expanded-content h2,
+  .expanded-card.collapsing .expanded-content h2 {
+    font-size: 1.25rem;
+    animation: none;
+  }
+
   footer {
     padding: 0.5rem;
   }
@@ -594,12 +624,25 @@ body.no-scroll {
   }
 
   .expanded-content h2 {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
   }
 
   .expanded-content p {
     font-size: 0.95rem;
     line-height: 1.5;
+  }
+
+  @keyframes expandTitle {
+    from {
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    to {
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
   }
 }
 
