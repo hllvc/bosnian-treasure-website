@@ -231,8 +231,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function closeExpandedCard() {
-    // Hide text immediately
+    // Hide text and keep small font during collapse
     expandedCard.classList.add('content-hidden');
+    expandedCard.classList.add('collapsing');
 
     // Get current card position (may have changed due to swipe)
     if (currentSourceCard) {
@@ -257,6 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
         overlay.classList.remove('animating');
         document.body.classList.remove('no-scroll');
         expandedCard.classList.remove('content-hidden');
+        expandedCard.classList.remove('collapsing');
 
         // Show the source card again
         if (currentSourceCard) {
@@ -275,6 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
       overlay.classList.remove('animating');
       document.body.classList.remove('no-scroll');
       expandedCard.classList.remove('content-hidden');
+      expandedCard.classList.remove('collapsing');
 
       // Show the source card again
       if (currentSourceCard) {
