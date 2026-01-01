@@ -1,0 +1,440 @@
+/* =====================
+   Bosansko Blago - Fresh Design
+   Child-friendly, illustration-focused
+   ===================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background-color: #FAFAF8;
+  /* Subtle ćilim-inspired diamond pattern */
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c4a574' fill-opacity='0.06'%3E%3Cpath d='M30 0l30 30-30 30L0 30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  color: #3d3d3d;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Header */
+header {
+  padding: 1.25rem 1rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #5a4a3a;
+  letter-spacing: 0.02em;
+}
+
+/* Main Content */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  overflow: hidden;
+}
+
+/* Swiper Container */
+.swiper {
+  width: 100%;
+  max-width: 320px;
+  height: 440px;
+  padding: 1rem 0;
+  opacity: 0;
+}
+
+.swiper.loaded {
+  animation: cardEntrance 0.5s ease-out forwards;
+}
+
+/* Hide Swiper shadows */
+.swiper-slide-shadow,
+.swiper-slide-shadow-left,
+.swiper-slide-shadow-right {
+  display: none !important;
+}
+
+.swiper-slide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Cards - Full bleed images */
+.card {
+  position: relative;
+  width: 280px;
+  height: 380px;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Title overlay at bottom */
+.card-title {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1.5rem 1.25rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+}
+
+.card-title h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+/* Swiper Pagination */
+.swiper-pagination {
+  position: relative;
+  margin-top: 0.75rem;
+}
+
+.swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  background: rgba(90, 74, 58, 0.3);
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+.swiper-pagination-bullet-active {
+  background: #5a4a3a;
+  width: 24px;
+  border-radius: 4px;
+}
+
+/* Footer */
+footer {
+  padding: 0.75rem 1rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+footer p {
+  font-size: 0.875rem;
+  color: rgba(90, 74, 58, 0.7);
+}
+
+footer .heart {
+  color: #e85a5a;
+  display: inline-block;
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+footer .authors {
+  color: #5a4a3a;
+  font-weight: 500;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* Entrance animation */
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Deep link animation */
+@keyframes deepLinkPulse {
+  0% { box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 0 0 0 rgba(90, 74, 58, 0.4); }
+  50% { box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 0 0 12px rgba(90, 74, 58, 0); }
+  100% { box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 0 0 0 rgba(90, 74, 58, 0); }
+}
+
+.card.deep-linked {
+  animation: deepLinkPulse 0.8s ease-out;
+}
+
+/* No scroll when overlay is open */
+body.no-scroll {
+  overflow: hidden;
+}
+
+/* =====================
+   Expanded Card Overlay
+   ===================== */
+.card-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(250, 250, 248, 0.96);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.card-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.expanded-card {
+  width: 100%;
+  max-width: 400px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  background: #ffffff;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transform: scale(0.9) translateY(30px);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.card-overlay.active .expanded-card {
+  transform: scale(1) translateY(0);
+}
+
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  color: #5a4a3a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: background 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.close-btn:hover {
+  background: #ffffff;
+  transform: scale(1.1);
+}
+
+.close-btn:active {
+  transform: scale(0.95);
+}
+
+.expanded-image {
+  width: 100%;
+  height: 280px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.expanded-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.expanded-content {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  background: #ffffff;
+}
+
+.expanded-content h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #5a4a3a;
+  margin-bottom: 1rem;
+}
+
+.expanded-content p {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: #4a4a4a;
+}
+
+/* Card tap hint */
+.swiper-slide-active .card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1.5rem;
+  pointer-events: none;
+  transition: box-shadow 0.3s ease;
+}
+
+.swiper-slide-active .card:active::after {
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.4);
+}
+
+/* Responsive adjustments */
+@media (min-width: 480px) {
+  header h1 {
+    font-size: 2rem;
+  }
+
+  .swiper {
+    max-width: 360px;
+    height: 500px;
+  }
+
+  .card {
+    width: 320px;
+    height: 420px;
+  }
+
+  .card-title h2 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  header h1 {
+    font-size: 2.25rem;
+  }
+
+  .swiper {
+    max-width: 420px;
+    height: 560px;
+  }
+
+  .card {
+    width: 360px;
+    height: 480px;
+  }
+
+  .expanded-card {
+    max-width: 480px;
+  }
+
+  .expanded-image {
+    height: 320px;
+  }
+
+  .expanded-content {
+    padding: 2rem;
+  }
+
+  .expanded-content h2 {
+    font-size: 2rem;
+  }
+
+  .expanded-content p {
+    font-size: 1.1rem;
+  }
+}
+
+/* Landscape mode on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  header {
+    padding: 0.5rem 1rem;
+  }
+
+  header h1 {
+    font-size: 1.25rem;
+  }
+
+  .swiper {
+    height: 280px;
+    padding: 0.5rem 0;
+  }
+
+  .card {
+    width: 220px;
+    height: 220px;
+  }
+
+  .card-title {
+    padding: 1rem;
+  }
+
+  .card-title h2 {
+    font-size: 1.25rem;
+  }
+
+  footer {
+    padding: 0.5rem;
+  }
+
+  footer p {
+    font-size: 0.75rem;
+  }
+
+  .expanded-card {
+    flex-direction: row;
+    max-width: 90vw;
+    max-height: 85vh;
+  }
+
+  .expanded-image {
+    width: 40%;
+    height: 100%;
+  }
+
+  .expanded-content {
+    width: 60%;
+    padding: 1.25rem;
+  }
+
+  .expanded-content h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Safe area for notched devices */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+}
