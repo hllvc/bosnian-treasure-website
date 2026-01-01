@@ -458,24 +458,58 @@ document.addEventListener('DOMContentLoaded', function() {
   function navigateToDeepLink() {
     const targetIndex = getCardIndexFromHash();
 
-    if (targetIndex !== null) {
-      // Small delay for visual effect when coming from QR code
+    if (targetIndex !== null && targetIndex > 0) {
+      // Step through cards one by one with ease-in-out timing
       setTimeout(function() {
-        swiper.slideTo(targetIndex, 600);
+        let currentIndex = 0;
+        const totalSteps = targetIndex;
 
-        // Add visual feedback to the target card
-        setTimeout(function() {
-          const activeSlide = swiper.slides[swiper.activeIndex];
-          if (activeSlide) {
-            const card = activeSlide.querySelector('.card');
-            if (card) {
-              card.classList.add('deep-linked');
-              setTimeout(function() {
-                card.classList.remove('deep-linked');
-              }, 800);
-            }
+        function easeInOutQuad(t) {
+          return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        }
+
+        function stepToNext() {
+          currentIndex++;
+
+          // Calculate progress (0 to 1)
+          const progress = currentIndex / totalSteps;
+
+          // Eased progress for timing - inverted so slow at start/end, fast in middle
+          const easedProgress = easeInOutQuad(progress);
+          const prevEased = easeInOutQuad((currentIndex - 1) / totalSteps);
+          const stepSpeed = easedProgress - prevEased;
+
+          // Base delay inversely proportional to speed (slower = longer delay)
+          // Range: 100ms (fastest in middle) to 200ms (slowest at start/end)
+          const minDelay = 100;
+          const maxDelay = 200;
+          const delay = maxDelay - (stepSpeed * totalSteps * (maxDelay - minDelay));
+
+          // Slide speed also varies - faster slides in middle
+          const slideSpeed = 150 + (1 - stepSpeed * totalSteps) * 100;
+
+          swiper.slideTo(currentIndex, slideSpeed);
+
+          if (currentIndex < targetIndex) {
+            setTimeout(stepToNext, delay);
+          } else {
+            // Final card - add visual feedback
+            setTimeout(function() {
+              const activeSlide = swiper.slides[swiper.activeIndex];
+              if (activeSlide) {
+                const card = activeSlide.querySelector('.card');
+                if (card) {
+                  card.classList.add('deep-linked');
+                  setTimeout(function() {
+                    card.classList.remove('deep-linked');
+                  }, 800);
+                }
+              }
+            }, 200);
           }
-        }, 650);
+        }
+
+        stepToNext();
       }, 300);
     }
   }
