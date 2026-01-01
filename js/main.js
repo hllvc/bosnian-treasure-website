@@ -99,7 +99,46 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.location.hash !== newHash) {
       history.replaceState(null, null, newHash);
     }
+
+    // Reset pulse timer on slide change
+    resetPulseTimer();
   });
+
+  // Pulse animation after 30s of inactivity
+  let pulseTimer = null;
+
+  function startPulse() {
+    const activeSlide = document.querySelector('.swiper-slide-active');
+    if (activeSlide) {
+      const card = activeSlide.querySelector('.card');
+      if (card) {
+        card.classList.add('pulsing');
+      }
+    }
+  }
+
+  function stopPulse() {
+    document.querySelectorAll('.card.pulsing').forEach(function(card) {
+      card.classList.remove('pulsing');
+    });
+  }
+
+  function resetPulseTimer() {
+    stopPulse();
+    clearTimeout(pulseTimer);
+    pulseTimer = setTimeout(startPulse, 5000);
+  }
+
+  // Start initial timer
+  resetPulseTimer();
+
+  // Reset timer on any card interaction
+  document.querySelectorAll('.card').forEach(function(card) {
+    card.addEventListener('click', resetPulseTimer);
+  });
+
+  // Reset timer on swipe
+  swiper.on('touchStart', resetPulseTimer);
 
   // =====================
   // Full Screen Expansion
@@ -108,6 +147,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const overlay = document.getElementById('card-overlay');
   const expandedCard = document.getElementById('expanded-card');
   const closeBtn = document.getElementById('close-expanded');
+
+  // Store the source card rect for FLIP animation
+  let sourceCardRect = null;
+  let currentSourceCard = null;
 
   // Expand card on click (not swipe)
   document.querySelectorAll('.swiper-slide .card').forEach(function(card) {
@@ -135,25 +178,112 @@ document.addEventListener('DOMContentLoaded', function() {
     const expandedTitle = expandedCard.querySelector('.expanded-content h2');
     const expandedDescription = expandedCard.querySelector('.expanded-content p');
 
+    // Reset any previous state
+    expandedCard.classList.add('content-hidden');
+    expandedCard.classList.remove('swiping');
+    expandedCard.classList.remove('swipe-start');
+    overlay.classList.remove('animating');
+
+    // Set content
     expandedImage.src = image.src;
     expandedImage.alt = image.alt;
     expandedTitle.textContent = title.textContent;
     expandedDescription.textContent = description;
 
-    // Show overlay
+    // Capture card position
+    sourceCardRect = card.getBoundingClientRect();
+    currentSourceCard = card;
+
+    // Hide the source card while expanded
+    currentSourceCard.style.visibility = 'hidden';
+
+    // Set initial size and position (exactly matching the card)
+    expandedCard.style.width = sourceCardRect.width + 'px';
+    expandedCard.style.height = sourceCardRect.height + 'px';
+    expandedCard.style.top = sourceCardRect.top + 'px';
+    expandedCard.style.left = sourceCardRect.left + 'px';
+    expandedCard.style.borderRadius = '1.5rem';
+    expandedCard.style.transform = '';
+
+    // Show overlay without animation class first
+    overlay.classList.remove('animating');
     overlay.classList.add('active');
     document.body.classList.add('no-scroll');
+
+    // Force reflow
+    expandedCard.offsetHeight;
+
+    // Add animation class and animate to full screen
+    overlay.classList.add('animating');
+    expandedCard.style.width = '100%';
+    expandedCard.style.height = '100%';
+    expandedCard.style.top = '0';
+    expandedCard.style.left = '0';
+    expandedCard.style.borderRadius = '0';
+
+    // Fade in text after expansion completes
+    setTimeout(function() {
+      expandedCard.classList.remove('content-hidden');
+    }, 350);
 
     // Disable swiper while expanded
     swiper.disable();
   }
 
   function closeExpandedCard() {
-    overlay.classList.remove('active');
-    document.body.classList.remove('no-scroll');
+    // Hide text immediately
+    expandedCard.classList.add('content-hidden');
 
-    // Re-enable swiper
-    swiper.enable();
+    // Get current card position (may have changed due to swipe)
+    if (currentSourceCard) {
+      sourceCardRect = currentSourceCard.getBoundingClientRect();
+    }
+
+    if (sourceCardRect) {
+      // Ensure animation class is on
+      overlay.classList.add('animating');
+
+      // Animate back to card size and position
+      expandedCard.style.width = sourceCardRect.width + 'px';
+      expandedCard.style.height = sourceCardRect.height + 'px';
+      expandedCard.style.top = sourceCardRect.top + 'px';
+      expandedCard.style.left = sourceCardRect.left + 'px';
+      expandedCard.style.borderRadius = '1.5rem';
+      expandedCard.style.transform = '';
+
+      // Wait for animation to complete before hiding
+      setTimeout(function() {
+        overlay.classList.remove('active');
+        overlay.classList.remove('animating');
+        document.body.classList.remove('no-scroll');
+        expandedCard.classList.remove('content-hidden');
+
+        // Show the source card again
+        if (currentSourceCard) {
+          currentSourceCard.style.visibility = '';
+        }
+
+        sourceCardRect = null;
+        currentSourceCard = null;
+
+        // Re-enable swiper
+        swiper.enable();
+      }, 350);
+    } else {
+      // Fallback: no animation
+      overlay.classList.remove('active');
+      overlay.classList.remove('animating');
+      document.body.classList.remove('no-scroll');
+      expandedCard.classList.remove('content-hidden');
+
+      // Show the source card again
+      if (currentSourceCard) {
+        currentSourceCard.style.visibility = '';
+      }
+
+      // Re-enable swiper
+      swiper.enable();
+    }
   }
 
   // Close on button click
@@ -171,6 +301,137 @@ document.addEventListener('DOMContentLoaded', function() {
     if (e.key === 'Escape' && overlay.classList.contains('active')) {
       closeExpandedCard();
     }
+  });
+
+  // =====================
+  // Swipe to Dismiss
+  // =====================
+
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  let swipeCurrentX = 0;
+  let swipeCurrentY = 0;
+  let swipeStartTime = 0;
+  let isSwipingToDismiss = false;
+  let isCompacted = false;
+  let swipeRafId = null;
+  let compactTimeoutId = null;
+
+  expandedCard.addEventListener('touchstart', function(e) {
+    // Don't start swipe if touching close button
+    if (e.target.closest('.close-btn')) return;
+
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
+    swipeCurrentX = swipeStartX;
+    swipeCurrentY = swipeStartY;
+    swipeStartTime = Date.now();
+    isSwipingToDismiss = false;
+    isCompacted = false;
+  }, { passive: true });
+
+  expandedCard.addEventListener('touchmove', function(e) {
+    if (swipeStartX === 0 && swipeStartY === 0) return;
+
+    swipeCurrentX = e.touches[0].clientX;
+    swipeCurrentY = e.touches[0].clientY;
+    const deltaX = swipeCurrentX - swipeStartX;
+    const deltaY = swipeCurrentY - swipeStartY;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    // Start swiping if moved more than 10px in any direction
+    if (distance > 10) {
+      if (!isSwipingToDismiss) {
+        // First time entering swipe mode
+        isSwipingToDismiss = true;
+        expandedCard.classList.add('content-hidden');
+        expandedCard.classList.add('swiping');
+
+        // Schedule compact after delay (skip if quick flick)
+        compactTimeoutId = setTimeout(function() {
+          if (isSwipingToDismiss && !isCompacted && sourceCardRect) {
+            isCompacted = true;
+            // Calculate uniform scale based on width
+            const compactScale = sourceCardRect.width / window.innerWidth;
+            expandedCard.classList.remove('swiping');
+            expandedCard.classList.add('swipe-start');
+            expandedCard.style.borderRadius = '1.5rem';
+            expandedCard.style.transform = `translate(${swipeCurrentX - swipeStartX}px, ${swipeCurrentY - swipeStartY}px) scale(${compactScale})`;
+
+            // After compact animation, back to immediate response
+            setTimeout(function() {
+              expandedCard.classList.remove('swipe-start');
+              expandedCard.classList.add('swiping');
+            }, 200);
+          }
+        }, 150);
+      }
+
+      // Update position
+      if (swipeRafId) cancelAnimationFrame(swipeRafId);
+      swipeRafId = requestAnimationFrame(function() {
+        if (isCompacted && sourceCardRect) {
+          const compactScale = sourceCardRect.width / window.innerWidth;
+          expandedCard.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${compactScale})`;
+          expandedCard.style.borderRadius = '1.5rem';
+        } else {
+          expandedCard.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1)`;
+          expandedCard.style.borderRadius = '0';
+        }
+      });
+    }
+  }, { passive: true });
+
+  expandedCard.addEventListener('touchend', function(e) {
+    // Cancel any pending animation frame
+    if (swipeRafId) {
+      cancelAnimationFrame(swipeRafId);
+      swipeRafId = null;
+    }
+
+    // Cancel pending compact timeout
+    if (compactTimeoutId) {
+      clearTimeout(compactTimeoutId);
+      compactTimeoutId = null;
+    }
+
+    if (!isSwipingToDismiss) {
+      swipeStartX = 0;
+      swipeStartY = 0;
+      return;
+    }
+
+    const deltaX = swipeCurrentX - swipeStartX;
+    const deltaY = swipeCurrentY - swipeStartY;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const deltaTime = Date.now() - swipeStartTime;
+    const velocity = distance / deltaTime;
+
+    expandedCard.classList.remove('swiping');
+    expandedCard.classList.remove('swipe-start');
+
+    // Close if dragged far enough (120px) or fast enough (velocity > 0.4)
+    if (distance > 120 || velocity > 0.4) {
+      // Animate back to card position (reuse close logic)
+      closeExpandedCard();
+    } else {
+      // Snap back to full screen with bounce
+      overlay.classList.add('animating');
+      expandedCard.style.transform = '';
+      expandedCard.style.borderRadius = '0';
+
+      // Restore text after snap back animation
+      setTimeout(function() {
+        expandedCard.classList.remove('content-hidden');
+      }, 350);
+    }
+
+    swipeStartX = 0;
+    swipeStartY = 0;
+    swipeCurrentX = 0;
+    swipeCurrentY = 0;
+    isSwipingToDismiss = false;
+    isCompacted = false;
   });
 
   // =====================
