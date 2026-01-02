@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
   // Card name to index mapping
-  const cardNames = ['fildzhan', 'fes', 'ibrik', 'bosanska-kuca', 'cilim', 'sargija', 'opanak', 'baklava', 'ljiljan'];
+  const cardNames = ['fildzan', 'fes', 'ibrik', 'bosanska-kuca', 'cilim', 'sargija', 'opanak', 'baklava', 'ljiljan'];
 
   // Parse deep link from URL hash
   function getCardIndexFromHash() {
@@ -529,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       // Set initial hash if not present
       if (!window.location.hash) {
-        history.replaceState(null, null, '#fildzhan');
+        history.replaceState(null, null, '#fildzan');
       }
     }
   }, 100);
