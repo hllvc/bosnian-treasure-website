@@ -716,8 +716,8 @@ document.addEventListener('DOMContentLoaded', function() {
       cardBack.appendChild(qrScannerContainer);
     }
 
-    // Start flip animation
-    card.classList.add('flipping');
+    // Flip the card
+    card.classList.add('flipped');
     isCardFlipped = true;
     activeFlippedCard = card;
     document.body.classList.add('scanning');
@@ -725,12 +725,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Disable swiper while flipped
     swiper.disable();
 
-    // After animation completes, set final state and start scanner
+    // After flip animation completes, start scanner
     setTimeout(function() {
-      card.classList.remove('flipping');
-      card.classList.add('flipped');
       startScanner();
-    }, 600);
+    }, 650);
   }
 
   function startScanner() {
@@ -792,30 +790,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     stopScanner();
 
-    var card = activeFlippedCard;
-
-    // Start unflip animation
-    if (card) {
-      card.classList.remove('flipped');
-      card.classList.add('unflipping');
+    // Flip card back
+    if (activeFlippedCard) {
+      activeFlippedCard.classList.remove('flipped');
     }
     document.body.classList.remove('scanning');
 
-    // Reset state immediately
+    // Reset state
     isCardFlipped = false;
+    var card = activeFlippedCard;
     activeFlippedCard = null;
 
-    // After animation completes, clean up
+    // After flip animation completes, clean up
     setTimeout(function() {
-      if (card) {
-        card.classList.remove('unflipping');
-      }
       // Move scanner container back to body
       if (qrScannerContainer) {
         document.body.appendChild(qrScannerContainer);
       }
       swiper.enable();
-    }, 600);
+    }, 650);
   }
 
   function onScanSuccess(decodedText) {
