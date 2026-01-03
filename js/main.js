@@ -736,8 +736,8 @@ document.addEventListener('DOMContentLoaded', function() {
       setTimeout(function() {
         stopScanner();
 
-        // Set hash and navigate
-        window.location.hash = cardName;
+        // Update URL without triggering hashchange event
+        history.replaceState(null, null, '#' + cardName);
 
         // Navigate from current position to target
         var targetIndex = cardNames.indexOf(cardName);
