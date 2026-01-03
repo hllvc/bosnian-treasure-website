@@ -169,9 +169,10 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   function expandCard(card) {
-    // Get card content
-    const image = card.querySelector('.card-image img');
-    const title = card.querySelector('.card-title h2');
+    // Get card content (from card-front)
+    const cardFront = card.querySelector('.card-front');
+    const image = cardFront ? cardFront.querySelector('.card-image img') : card.querySelector('.card-image img');
+    const title = cardFront ? cardFront.querySelector('.card-title h2') : card.querySelector('.card-title h2');
     const description = card.getAttribute('data-description');
 
     const expandedImage = expandedCard.querySelector('.expanded-image img');
@@ -652,6 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let isQrScanning = false;
   let isCardFlipped = false;
   let activeFlippedCard = null;
+  let isRequestingPermission = false; // Prevent click-outside during permission dialog
 
   // Valid card names for QR validation
   const validCardNames = new Set(cardNames);
@@ -693,38 +695,27 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function flipCardToScanner() {
-    console.log('flipCardToScanner called');
-    if (isCardFlipped || isQrScanning) {
-      console.log('Early return: already flipped or scanning');
+    if (isCardFlipped || isQrScanning || isRequestingPermission) {
       return;
     }
 
     const activeSlide = swiper.slides[swiper.activeIndex];
-    console.log('activeSlide:', activeSlide);
     if (!activeSlide) return;
 
     const card = activeSlide.querySelector('.card');
-    console.log('card:', card);
     if (!card) return;
 
-    // Create card-back if it doesn't exist
-    let cardBack = card.querySelector('.card-back');
-    if (!cardBack) {
-      cardBack = document.createElement('div');
-      cardBack.className = 'card-back';
-      card.appendChild(cardBack);
-      console.log('Created card-back');
-    }
+    // Get card-back (pre-structured in HTML)
+    const cardBack = card.querySelector('.card-back');
+    if (!cardBack) return;
 
     // Move scanner container into card back
     if (qrScannerContainer) {
       cardBack.appendChild(qrScannerContainer);
-      console.log('Moved scanner to card-back');
     }
 
     // Flip the card
     card.classList.add('flipped');
-    console.log('Added flipped class, card classes:', card.className);
     isCardFlipped = true;
     activeFlippedCard = card;
     document.body.classList.add('scanning');
@@ -734,9 +725,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Wait for flip animation to complete, then start scanner
     setTimeout(function() {
-      console.log('Starting scanner after delay');
       startScanner();
-    }, 650);
+    }, 350);
   }
 
   function startScanner() {
@@ -759,6 +749,9 @@ document.addEventListener('DOMContentLoaded', function() {
       aspectRatio: 1.0
     };
 
+    // Set flag to prevent click-outside during permission dialog
+    isRequestingPermission = true;
+
     html5QrCode.start(
       { facingMode: 'environment' },
       config,
@@ -766,8 +759,10 @@ document.addEventListener('DOMContentLoaded', function() {
       onScanFailure
     ).then(function() {
       isQrScanning = true;
+      isRequestingPermission = false;
     }).catch(function(err) {
       console.error('QR Scanner error:', err);
+      isRequestingPermission = false;
       showQrStatus('Kamera nije dozvoljena.', 'error');
       // Flip back if camera permission denied
       setTimeout(function() {
@@ -789,20 +784,29 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function flipCardBack() {
-    if (!isCardFlipped || !activeFlippedCard) return;
+    if (!isCardFlipped) return;
 
     stopScanner();
 
+    // Move scanner container back to body
+    if (qrScannerContainer) {
+      document.body.appendChild(qrScannerContainer);
+    }
+
     // Flip card back
-    activeFlippedCard.classList.remove('flipped');
+    if (activeFlippedCard) {
+      activeFlippedCard.classList.remove('flipped');
+    }
     document.body.classList.remove('scanning');
+
+    // Reset state immediately
+    isCardFlipped = false;
+    activeFlippedCard = null;
 
     // Re-enable swiper after flip animation
     setTimeout(function() {
       swiper.enable();
-      isCardFlipped = false;
-      activeFlippedCard = null;
-    }, 400);
+    }, 350);
   }
 
   function onScanSuccess(decodedText) {
@@ -849,7 +853,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Click outside flipped card to flip back
   document.addEventListener('click', function(e) {
-    if (!isCardFlipped) return;
+    if (!isCardFlipped || isRequestingPermission) return;
 
     // Check if click is outside the flipped card
     if (activeFlippedCard && !activeFlippedCard.contains(e.target) && e.target !== qrScannerBtn) {
