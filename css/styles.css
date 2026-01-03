@@ -120,13 +120,9 @@ main {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(145deg, #5a4a3a 0%, #3d332a 100%);
+  background: #1a1a1a;
   border-radius: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
+  overflow: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
   opacity: 0;
   visibility: hidden;
@@ -745,70 +741,130 @@ body.no-scroll {
   }
 }
 
-/* Scanner Container (hidden by default, moved to card back when scanning) */
+/* Scanner Container - fills entire card back */
 .qr-scanner-container {
   display: none;
-}
-
-/* Card back scanner styling */
-.card-back .qr-scanner-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  position: relative;
   width: 100%;
   height: 100%;
 }
 
-/* QR Reader Container - sized for card back */
-.card-back .qr-reader {
-  width: 240px;
-  height: 240px;
-  border-radius: 1rem;
-  overflow: hidden;
-  background: #1a1a1a;
+.card-back .qr-scanner-container {
+  display: block;
 }
 
-/* Override html5-qrcode default styles for card back */
+/* QR Reader - full card size */
 .card-back #qr-reader {
-  width: 240px !important;
-  height: 240px !important;
+  width: 100% !important;
+  height: 100% !important;
   border: none !important;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
-  border-radius: 1rem;
-  overflow: hidden;
+  background: #1a1a1a;
 }
 
 .card-back #qr-reader video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
-  border-radius: 1rem;
 }
 
 #qr-reader__scan_region {
   width: 100% !important;
   height: 100% !important;
-  min-height: 240px !important;
+  min-height: 100% !important;
   background: transparent !important;
 }
 
 #qr-reader__scan_region video {
   object-fit: cover !important;
+  border-radius: 1.5rem;
 }
 
 #qr-reader__dashboard {
   display: none !important;
 }
 
-/* Status Message */
+/* Viewfinder overlay */
+.qr-viewfinder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 180px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Viewfinder corner brackets */
+.qr-viewfinder::before,
+.qr-viewfinder::after,
+.qr-viewfinder .corner-bl,
+.qr-viewfinder .corner-br {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-color: #ffffff;
+  border-style: solid;
+  border-width: 0;
+}
+
+/* Top-left corner */
+.qr-viewfinder::before {
+  top: 0;
+  left: 0;
+  border-top-width: 3px;
+  border-left-width: 3px;
+  border-top-left-radius: 8px;
+}
+
+/* Top-right corner */
+.qr-viewfinder::after {
+  top: 0;
+  right: 0;
+  border-top-width: 3px;
+  border-right-width: 3px;
+  border-top-right-radius: 8px;
+}
+
+/* Bottom-left corner */
+.qr-viewfinder .corner-bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 3px;
+  border-left-width: 3px;
+  border-bottom-left-radius: 8px;
+}
+
+/* Bottom-right corner */
+.qr-viewfinder .corner-br {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 3px;
+  border-right-width: 3px;
+  border-bottom-right-radius: 8px;
+}
+
+/* Status Message - overlay at bottom */
 .qr-status {
-  margin-top: 1rem;
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
   color: #ffffff;
   text-align: center;
-  min-height: 2rem;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 0.5rem;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.qr-status:empty {
+  display: none;
 }
 
 .qr-status.error {
@@ -820,7 +876,6 @@ body.no-scroll {
 }
 
 /* Hide scanner button when card is flipped */
-.card.flipped ~ .qr-scanner-btn,
 body.scanning .qr-scanner-btn {
   visibility: hidden;
   opacity: 0;

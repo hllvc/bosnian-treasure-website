@@ -158,6 +158,9 @@ document.addEventListener('DOMContentLoaded', function() {
       // Only expand if not swiping
       if (isSwiping) return;
 
+      // Don't expand while QR scanning
+      if (isCardFlipped || isQrScanning) return;
+
       const slide = card.closest('.swiper-slide');
       const isActive = slide.classList.contains('swiper-slide-active');
 
@@ -695,66 +698,35 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function flipCardToScanner() {
-    console.log('[FLIP] flipCardToScanner called');
-    console.log('[FLIP] State:', { isCardFlipped, isQrScanning, isRequestingPermission });
-
     if (isCardFlipped || isQrScanning || isRequestingPermission) {
-      console.log('[FLIP] Early return - already flipped/scanning');
       return;
     }
 
     const activeSlide = swiper.slides[swiper.activeIndex];
-    console.log('[FLIP] Active slide:', activeSlide);
-    if (!activeSlide) {
-      console.log('[FLIP] No active slide found');
-      return;
-    }
+    if (!activeSlide) return;
 
     const card = activeSlide.querySelector('.card');
-    console.log('[FLIP] Card element:', card);
-    if (!card) {
-      console.log('[FLIP] No card found');
-      return;
-    }
+    if (!card) return;
 
-    // Check HTML structure
-    const cardInner = card.querySelector('.card-inner');
-    const cardFront = card.querySelector('.card-front');
     const cardBack = card.querySelector('.card-back');
-    console.log('[FLIP] Structure check:', {
-      hasCardInner: !!cardInner,
-      hasCardFront: !!cardFront,
-      hasCardBack: !!cardBack
-    });
-
-    if (!cardBack) {
-      console.log('[FLIP] No card-back found - HTML structure is wrong!');
-      return;
-    }
+    if (!cardBack) return;
 
     // Move scanner container into card back
     if (qrScannerContainer) {
       cardBack.appendChild(qrScannerContainer);
-      console.log('[FLIP] Scanner container moved to card-back');
     }
 
     // Flip the card
-    console.log('[FLIP] Adding flipped class...');
-    console.log('[FLIP] Card classes BEFORE:', card.className);
     card.classList.add('flipped');
-    console.log('[FLIP] Card classes AFTER:', card.className);
-
     isCardFlipped = true;
     activeFlippedCard = card;
     document.body.classList.add('scanning');
 
     // Disable swiper while flipped
     swiper.disable();
-    console.log('[FLIP] Swiper disabled, waiting for animation...');
 
     // Wait for flip animation to complete, then start scanner
     setTimeout(function() {
-      console.log('[FLIP] Starting scanner...');
       startScanner();
     }, 350);
   }
@@ -775,8 +747,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var config = {
       fps: 10,
-      qrbox: { width: 200, height: 200 },
-      aspectRatio: 1.0
+      qrbox: { width: 180, height: 180 },
+      disableFlip: false
     };
 
     // Set flag to prevent click-outside during permission dialog
@@ -814,11 +786,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function flipCardBack() {
-    console.log('[FLIP] flipCardBack called, isCardFlipped:', isCardFlipped);
-    if (!isCardFlipped) {
-      console.log('[FLIP] Not flipped, returning');
-      return;
-    }
+    if (!isCardFlipped) return;
 
     stopScanner();
 
@@ -829,7 +797,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Flip card back
     if (activeFlippedCard) {
-      console.log('[FLIP] Removing flipped class');
       activeFlippedCard.classList.remove('flipped');
     }
     document.body.classList.remove('scanning');
@@ -837,12 +804,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reset state immediately
     isCardFlipped = false;
     activeFlippedCard = null;
-    console.log('[FLIP] State reset');
 
     // Re-enable swiper after flip animation
     setTimeout(function() {
       swiper.enable();
-      console.log('[FLIP] Swiper re-enabled');
     }, 350);
   }
 
@@ -894,13 +859,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Ignore clicks on the QR button (including its SVG icon)
     if (qrScannerBtn && qrScannerBtn.contains(e.target)) {
-      console.log('[FLIP] Click on QR button, ignoring');
       return;
     }
 
     // Check if click is outside the flipped card
     if (activeFlippedCard && !activeFlippedCard.contains(e.target)) {
-      console.log('[FLIP] Click outside card, flipping back');
       flipCardBack();
     }
   });
