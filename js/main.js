@@ -797,9 +797,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var card = activeFlippedCard;
 
-    // Start unflip - add flipping class to keep 3D active during animation
+    // Start reverse flip - use flip-reverse class for proper visibility handling
     if (card) {
-      card.classList.add('flipping');
+      card.classList.add('flip-reverse');
       card.classList.remove('flipped');
     }
     document.body.classList.remove('scanning');
@@ -811,6 +811,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // After flip animation completes, clean up
     setTimeout(function() {
       if (card) {
+        card.classList.remove('flip-reverse');
         card.classList.remove('flipping');
       }
       // Move scanner container back to body
