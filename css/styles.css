@@ -140,20 +140,23 @@ main {
   overflow: hidden;
 }
 
-/* Card-front during forward flip: hide early in animation */
+/* Card-front during forward flip: hide at midpoint */
 .card.flipping .card-front,
 .card.flipped .card-front {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   visibility: hidden;
-  transition: visibility 0s 0.15s;
+  transition: visibility 0s 0.3s;
 }
 
-/* Card-front during reverse flip: visible immediately, backface controls appearance */
+/* Card-front during reverse flip: show at midpoint */
 .card.flip-reverse .card-front {
-  visibility: visible;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  visibility: hidden;
+  animation: showAtMidpoint 0.01s 0.15s forwards;
+}
+
+@keyframes showAtMidpoint {
+  to { visibility: visible; }
 }
 
 /* Card back (scanner) - hidden when not flipping */
@@ -176,17 +179,21 @@ main {
   transition: visibility 0s 0s;
 }
 
-/* Show card-back immediately when flip starts (forward) */
+/* Show card-back early (forward flip) */
 .card.flipping .card-back,
 .card.flipped .card-back {
-  visibility: visible;
+  visibility: hidden;
+  animation: showAtMidpoint 0.01s 0.15s forwards;
 }
 
-/* Card-back during reverse flip: visible, backface controls disappearance */
+/* Card-back during reverse flip: hide at midpoint */
 .card.flip-reverse .card-back {
   visibility: visible;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  animation: hideAtMidpoint 0.01s 0.3s forwards;
+}
+
+@keyframes hideAtMidpoint {
+  to { visibility: hidden; }
 }
 
 /* Enable pointer events on card-back when fully flipped */
