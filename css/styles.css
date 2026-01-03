@@ -77,6 +77,8 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
+  perspective: 1000px;
+  transform-style: preserve-3d;
 }
 
 /* Cards - Full bleed images */
@@ -87,8 +89,46 @@ main {
   border-radius: 1.5rem;
   box-shadow: -4px 0 4px rgba(0, 0, 0, 0.15), 4px 0 4px rgba(0, 0, 0, 0.15);
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: transform 0.6s ease;
   will-change: transform;
+  transform-style: preserve-3d;
+}
+
+/* Card flip state - !important to override Swiper transforms */
+.card.flipped {
+  transform: rotateY(180deg) !important;
+  transition: transform 0.6s ease !important;
+  box-shadow: 0 0 30px red !important; /* Debug: visible change */
+}
+
+.swiper-slide-active .card.flipped {
+  transform: rotateY(180deg) !important;
+}
+
+/* Card front (default content) */
+.card-front {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 1.5rem;
+  overflow: hidden;
+}
+
+/* Card back (scanner) */
+.card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
+  background: linear-gradient(145deg, #5a4a3a 0%, #3d332a 100%);
+  border-radius: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
 }
 
 .card-image {
@@ -99,6 +139,7 @@ main {
   left: 0;
   overflow: hidden;
   border-radius: 1.5rem;
+  backface-visibility: hidden;
 }
 
 .card-image img {
@@ -120,6 +161,7 @@ main {
     rgba(0, 0, 0, 0.2) 0%,
     rgba(0, 0, 0, 0.1) 40%,
     transparent 100%);
+  backface-visibility: hidden;
 }
 
 .card-title h2 {
@@ -145,6 +187,7 @@ main {
     rgba(0, 0, 0, 0.15) 40%,
     transparent 100%);
   pointer-events: none;
+  backface-visibility: hidden;
 }
 
 /* Swiper Pagination */
@@ -692,61 +735,41 @@ body.no-scroll {
   }
 }
 
-/* Scanner Overlay */
-.qr-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.95);
-  z-index: 1001;
+/* Scanner Container (hidden by default, moved to card back when scanning) */
+.qr-scanner-container {
+  display: none;
+}
+
+/* Card back scanner styling */
+.card-back .qr-scanner-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  visibility: hidden;
-  opacity: 0;
-  transition: visibility 0.3s, opacity 0.3s ease;
+  width: 100%;
+  height: 100%;
 }
 
-.qr-overlay.active {
-  visibility: visible;
-  opacity: 1;
-}
-
-.qr-overlay .close-btn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 10;
-}
-
-/* Safe area for close button */
-@supports (padding: max(0px)) {
-  .qr-overlay .close-btn {
-    top: max(1rem, calc(1rem + env(safe-area-inset-top)));
-    right: max(1rem, calc(1rem + env(safe-area-inset-right)));
-  }
-}
-
-/* QR Reader Container */
-.qr-reader {
-  width: 300px;
-  height: 300px;
+/* QR Reader Container - sized for card back */
+.card-back .qr-reader {
+  width: 240px;
+  height: 240px;
   border-radius: 1rem;
   overflow: hidden;
   background: #1a1a1a;
 }
 
-/* Override html5-qrcode default styles */
-#qr-reader {
-  width: 300px !important;
-  height: 300px !important;
+/* Override html5-qrcode default styles for card back */
+.card-back #qr-reader {
+  width: 240px !important;
+  height: 240px !important;
   border: none !important;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
   border-radius: 1rem;
   overflow: hidden;
 }
 
-#qr-reader video {
+.card-back #qr-reader video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
@@ -756,7 +779,7 @@ body.no-scroll {
 #qr-reader__scan_region {
   width: 100% !important;
   height: 100% !important;
-  min-height: 300px !important;
+  min-height: 240px !important;
   background: transparent !important;
 }
 
@@ -770,12 +793,12 @@ body.no-scroll {
 
 /* Status Message */
 .qr-status {
-  margin-top: 1.5rem;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
   color: #ffffff;
   text-align: center;
-  min-height: 2.5rem;
+  min-height: 2rem;
 }
 
 .qr-status.error {
@@ -783,11 +806,13 @@ body.no-scroll {
 }
 
 .qr-status.success {
-  color: #4caf50;
+  color: #69db7c;
 }
 
-/* Hide scanner button when overlay is active */
-.qr-overlay.active ~ .qr-scanner-btn {
+/* Hide scanner button when card is flipped */
+.card.flipped ~ .qr-scanner-btn,
+body.scanning .qr-scanner-btn {
   visibility: hidden;
   opacity: 0;
+  pointer-events: none;
 }

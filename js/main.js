@@ -642,15 +642,16 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // =====================
-  // QR Code Scanner
+  // QR Code Scanner (Flip Card)
   // =====================
 
   const qrScannerBtn = document.getElementById('qr-scanner-btn');
-  const qrOverlay = document.getElementById('qr-overlay');
-  const qrCloseBtn = document.getElementById('qr-close-btn');
+  const qrScannerContainer = document.getElementById('qr-scanner-container');
   const qrStatus = document.getElementById('qr-status');
   let html5QrCode = null;
   let isQrScanning = false;
+  let isCardFlipped = false;
+  let activeFlippedCard = null;
 
   // Valid card names for QR validation
   const validCardNames = new Set(cardNames);
@@ -691,16 +692,55 @@ document.addEventListener('DOMContentLoaded', function() {
     qrStatus.className = 'qr-status' + (type ? ' ' + type : '');
   }
 
-  function startScanner() {
-    if (isQrScanning) return;
-    if (!qrOverlay) return;
+  function flipCardToScanner() {
+    console.log('flipCardToScanner called');
+    if (isCardFlipped || isQrScanning) {
+      console.log('Early return: already flipped or scanning');
+      return;
+    }
 
-    qrOverlay.classList.add('active');
-    document.body.classList.add('no-scroll');
-    showQrStatus('Usmjerite kameru prema QR kodu...');
+    const activeSlide = swiper.slides[swiper.activeIndex];
+    console.log('activeSlide:', activeSlide);
+    if (!activeSlide) return;
 
-    // Disable swiper while scanning
+    const card = activeSlide.querySelector('.card');
+    console.log('card:', card);
+    if (!card) return;
+
+    // Create card-back if it doesn't exist
+    let cardBack = card.querySelector('.card-back');
+    if (!cardBack) {
+      cardBack = document.createElement('div');
+      cardBack.className = 'card-back';
+      card.appendChild(cardBack);
+      console.log('Created card-back');
+    }
+
+    // Move scanner container into card back
+    if (qrScannerContainer) {
+      cardBack.appendChild(qrScannerContainer);
+      console.log('Moved scanner to card-back');
+    }
+
+    // Flip the card
+    card.classList.add('flipped');
+    console.log('Added flipped class, card classes:', card.className);
+    isCardFlipped = true;
+    activeFlippedCard = card;
+    document.body.classList.add('scanning');
+
+    // Disable swiper while flipped
     swiper.disable();
+
+    // Wait for flip animation to complete, then start scanner
+    setTimeout(function() {
+      console.log('Starting scanner after delay');
+      startScanner();
+    }, 650);
+  }
+
+  function startScanner() {
+    showQrStatus('Usmjerite kameru prema QR kodu...');
 
     // Initialize scanner if not already
     if (!html5QrCode && typeof Html5Qrcode !== 'undefined') {
@@ -709,12 +749,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (!html5QrCode) {
       showQrStatus('Skener nije dostupan.', 'error');
+      flipCardBack();
       return;
     }
 
     var config = {
       fps: 10,
-      qrbox: { width: 250, height: 250 },
+      qrbox: { width: 200, height: 200 },
       aspectRatio: 1.0
     };
 
@@ -727,7 +768,11 @@ document.addEventListener('DOMContentLoaded', function() {
       isQrScanning = true;
     }).catch(function(err) {
       console.error('QR Scanner error:', err);
-      showQrStatus('Nije moguće pristupiti kameri. Molimo dozvolite pristup.', 'error');
+      showQrStatus('Kamera nije dozvoljena.', 'error');
+      // Flip back if camera permission denied
+      setTimeout(function() {
+        flipCardBack();
+      }, 1500);
     });
   }
 
@@ -740,15 +785,24 @@ document.addEventListener('DOMContentLoaded', function() {
         isQrScanning = false;
       });
     }
-
-    if (qrOverlay) {
-      qrOverlay.classList.remove('active');
-    }
-    document.body.classList.remove('no-scroll');
     showQrStatus('');
+  }
 
-    // Re-enable swiper
-    swiper.enable();
+  function flipCardBack() {
+    if (!isCardFlipped || !activeFlippedCard) return;
+
+    stopScanner();
+
+    // Flip card back
+    activeFlippedCard.classList.remove('flipped');
+    document.body.classList.remove('scanning');
+
+    // Re-enable swiper after flip animation
+    setTimeout(function() {
+      swiper.enable();
+      isCardFlipped = false;
+      activeFlippedCard = null;
+    }, 400);
   }
 
   function onScanSuccess(decodedText) {
@@ -766,16 +820,19 @@ document.addEventListener('DOMContentLoaded', function() {
         navigator.vibrate(100);
       }
 
-      // Stop scanner and navigate after brief delay
+      // Flip card back and navigate after animation
       setTimeout(function() {
-        stopScanner();
+        flipCardBack();
 
-        // Update URL without triggering hashchange event
-        history.replaceState(null, null, '#' + cardName);
+        // Wait for flip animation, then navigate
+        setTimeout(function() {
+          // Update URL without triggering hashchange event
+          history.replaceState(null, null, '#' + cardName);
 
-        // Navigate from current position using unified navigation function
-        navigateToDeepLink(swiper.activeIndex);
-      }, 500);
+          // Navigate from current position using unified navigation function
+          navigateToDeepLink(swiper.activeIndex);
+        }, 500);
+      }, 400);
     } else {
       showQrStatus('Nevažeći QR kod. Skenirajte Bosansko Blago QR kod.', 'error');
     }
@@ -787,25 +844,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Event Listeners
   if (qrScannerBtn) {
-    qrScannerBtn.addEventListener('click', startScanner);
+    qrScannerBtn.addEventListener('click', flipCardToScanner);
   }
 
-  if (qrCloseBtn) {
-    qrCloseBtn.addEventListener('click', stopScanner);
-  }
+  // Click outside flipped card to flip back
+  document.addEventListener('click', function(e) {
+    if (!isCardFlipped) return;
 
-  if (qrOverlay) {
-    qrOverlay.addEventListener('click', function(e) {
-      if (e.target === qrOverlay) {
-        stopScanner();
-      }
-    });
-  }
+    // Check if click is outside the flipped card
+    if (activeFlippedCard && !activeFlippedCard.contains(e.target) && e.target !== qrScannerBtn) {
+      flipCardBack();
+    }
+  });
 
-  // Close QR scanner on escape
+  // Close on escape key
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && qrOverlay && qrOverlay.classList.contains('active')) {
-      stopScanner();
+    if (e.key === 'Escape' && isCardFlipped) {
+      flipCardBack();
     }
   });
 
