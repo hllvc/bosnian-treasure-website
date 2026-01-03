@@ -460,63 +460,96 @@ document.addEventListener('DOMContentLoaded', function() {
   // Deep Link Navigation
   // =====================
 
-  function navigateToDeepLink() {
+  let isNavigating = false;
+
+  function navigateToDeepLink(customStartIndex) {
     const targetIndex = getCardIndexFromHash();
+    if (targetIndex === null) return;
 
-    if (targetIndex !== null && targetIndex > 0) {
-      // Step through cards one by one with ease-in-out timing
-      setTimeout(function() {
-        let currentIndex = 0;
-        const totalSteps = targetIndex;
+    // Prevent concurrent navigation animations
+    if (isNavigating) return;
 
-        function easeInOutQuad(t) {
-          return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    // Use provided startIndex or default to 0 (for page load)
+    const startIndex = typeof customStartIndex === 'number' ? customStartIndex : 0;
+
+    // If already at target, just pulse
+    if (startIndex === targetIndex) {
+      const activeSlide = swiper.slides[swiper.activeIndex];
+      if (activeSlide) {
+        const card = activeSlide.querySelector('.card');
+        if (card) {
+          card.classList.add('deep-linked');
+          setTimeout(function() {
+            card.classList.remove('deep-linked');
+          }, 1800);
         }
-
-        function stepToNext() {
-          currentIndex++;
-
-          // Calculate progress (0 to 1)
-          const progress = currentIndex / totalSteps;
-
-          // Eased progress for timing - inverted so slow at start/end, fast in middle
-          const easedProgress = easeInOutQuad(progress);
-          const prevEased = easeInOutQuad((currentIndex - 1) / totalSteps);
-          const stepSpeed = easedProgress - prevEased;
-
-          // Base delay inversely proportional to speed (slower = longer delay)
-          // Range: 100ms (fastest in middle) to 200ms (slowest at start/end)
-          const minDelay = 100;
-          const maxDelay = 200;
-          const delay = maxDelay - (stepSpeed * totalSteps * (maxDelay - minDelay));
-
-          // Slide speed also varies - faster slides in middle
-          const slideSpeed = 150 + (1 - stepSpeed * totalSteps) * 100;
-
-          swiper.slideTo(currentIndex, slideSpeed);
-
-          if (currentIndex < targetIndex) {
-            setTimeout(stepToNext, delay);
-          } else {
-            // Final card - add visual feedback
-            setTimeout(function() {
-              const activeSlide = swiper.slides[swiper.activeIndex];
-              if (activeSlide) {
-                const card = activeSlide.querySelector('.card');
-                if (card) {
-                  card.classList.add('deep-linked');
-                  setTimeout(function() {
-                    card.classList.remove('deep-linked');
-                  }, 1800);
-                }
-              }
-            }, 200);
-          }
-        }
-
-        stepToNext();
-      }, 300);
+      }
+      return;
     }
+
+    // Calculate direction and steps
+    const direction = targetIndex > startIndex ? 1 : -1;
+    const totalSteps = Math.abs(targetIndex - startIndex);
+
+    // Skip animation for page load from 0 if target is 0
+    if (totalSteps === 0) return;
+
+    isNavigating = true;
+
+    // Step through cards one by one with ease-in-out timing
+    setTimeout(function() {
+      let currentIndex = startIndex;
+      let stepCount = 0;
+
+      function easeInOutQuad(t) {
+        return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      }
+
+      function stepToNext() {
+        currentIndex += direction;
+        stepCount++;
+
+        // Calculate progress (0 to 1)
+        const progress = stepCount / totalSteps;
+
+        // Eased progress for timing - inverted so slow at start/end, fast in middle
+        const easedProgress = easeInOutQuad(progress);
+        const prevEased = easeInOutQuad((stepCount - 1) / totalSteps);
+        const stepSpeed = easedProgress - prevEased;
+
+        // Base delay inversely proportional to speed (slower = longer delay)
+        // Range: 100ms (fastest in middle) to 200ms (slowest at start/end)
+        const minDelay = 100;
+        const maxDelay = 200;
+        const delay = maxDelay - (stepSpeed * totalSteps * (maxDelay - minDelay));
+
+        // Slide speed also varies - faster slides in middle
+        const slideSpeed = 150 + (1 - stepSpeed * totalSteps) * 100;
+
+        swiper.slideTo(currentIndex, slideSpeed);
+
+        if (currentIndex !== targetIndex) {
+          setTimeout(stepToNext, delay);
+        } else {
+          // Final card - add visual feedback and release lock
+          setTimeout(function() {
+            isNavigating = false;
+            const activeSlide = swiper.slides[swiper.activeIndex];
+            if (activeSlide) {
+              const card = activeSlide.querySelector('.card');
+              if (card) {
+                card.classList.add('deep-linked');
+                setTimeout(function() {
+                  card.classList.remove('deep-linked');
+                }, 1800);
+              }
+            }
+          }, 200);
+        }
+      }
+
+      stepToNext();
+    }, 300);
   }
 
   // Add loaded class for entrance animation
@@ -536,6 +569,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Listen for hash changes (browser back/forward)
   window.addEventListener('hashchange', function() {
+    if (isNavigating) return; // Don't interfere with ongoing animation
     const targetIndex = getCardIndexFromHash();
     if (targetIndex !== null) {
       swiper.slideTo(targetIndex, 400);
@@ -739,73 +773,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update URL without triggering hashchange event
         history.replaceState(null, null, '#' + cardName);
 
-        // Navigate from current position to target
-        var targetIndex = cardNames.indexOf(cardName);
-        if (targetIndex !== -1) {
-          var startIndex = swiper.activeIndex;
-
-          // If already at target, just pulse
-          if (startIndex === targetIndex) {
-            var activeSlide = swiper.slides[swiper.activeIndex];
-            if (activeSlide) {
-              var card = activeSlide.querySelector('.card');
-              if (card) {
-                card.classList.add('deep-linked');
-                setTimeout(function() {
-                  card.classList.remove('deep-linked');
-                }, 1800);
-              }
-            }
-            return;
-          }
-
-          // Navigate to target with animation
-          var direction = targetIndex > startIndex ? 1 : -1;
-          var totalSteps = Math.abs(targetIndex - startIndex);
-          var currentIndex = startIndex;
-          var stepCount = 0;
-
-          function easeInOutQuad(t) {
-            return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-          }
-
-          function stepToNext() {
-            currentIndex += direction;
-            stepCount++;
-
-            var progress = stepCount / totalSteps;
-            var easedProgress = easeInOutQuad(progress);
-            var prevEased = easeInOutQuad((stepCount - 1) / totalSteps);
-            var stepSpeed = easedProgress - prevEased;
-
-            var minDelay = 100;
-            var maxDelay = 200;
-            var delay = maxDelay - (stepSpeed * totalSteps * (maxDelay - minDelay));
-            var slideSpeed = 150 + (1 - stepSpeed * totalSteps) * 100;
-
-            swiper.slideTo(currentIndex, slideSpeed);
-
-            if (currentIndex !== targetIndex) {
-              setTimeout(stepToNext, delay);
-            } else {
-              // Final card - add visual feedback
-              setTimeout(function() {
-                var activeSlide = swiper.slides[swiper.activeIndex];
-                if (activeSlide) {
-                  var card = activeSlide.querySelector('.card');
-                  if (card) {
-                    card.classList.add('deep-linked');
-                    setTimeout(function() {
-                      card.classList.remove('deep-linked');
-                    }, 1800);
-                  }
-                }
-              }, 200);
-            }
-          }
-
-          setTimeout(stepToNext, 300);
-        }
+        // Navigate from current position using unified navigation function
+        navigateToDeepLink(swiper.activeIndex);
       }, 500);
     } else {
       showQrStatus('Nevažeći QR kod. Skenirajte Bosansko Blago QR kod.', 'error');
