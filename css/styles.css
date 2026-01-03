@@ -109,7 +109,7 @@ main {
   height: 100%;
   border-radius: 1.5rem;
   overflow: hidden;
-  transition: opacity 0.3s ease;
+  transform: scaleX(1);
   z-index: 2;
 }
 
@@ -123,23 +123,57 @@ main {
   background: #1a1a1a;
   border-radius: 1.5rem;
   overflow: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-  opacity: 0;
-  visibility: hidden;
+  transform: scaleX(0);
   z-index: 1;
 }
 
-/* Card flip state - hide front, show back */
+/* Flip animation - front flips out */
+.card.flipping .card-front {
+  animation: flipOut 0.3s ease-in forwards;
+}
+
+/* Flip animation - back flips in (with delay) */
+.card.flipping .card-back {
+  animation: flipIn 0.3s ease-out 0.3s forwards;
+}
+
+/* Unflip animation - back flips out */
+.card.unflipping .card-back {
+  animation: flipOut 0.3s ease-in forwards;
+}
+
+/* Unflip animation - front flips in (with delay) */
+.card.unflipping .card-front {
+  animation: flipIn 0.3s ease-out 0.3s forwards;
+}
+
+/* Final flipped state */
 .card.flipped .card-front {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  z-index: 1 !important;
+  transform: scaleX(0);
+  z-index: 1;
 }
 
 .card.flipped .card-back {
-  opacity: 1 !important;
-  visibility: visible !important;
-  z-index: 2 !important;
+  transform: scaleX(1);
+  z-index: 2;
+}
+
+@keyframes flipOut {
+  0% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes flipIn {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
 }
 
 .card-image {
@@ -781,68 +815,6 @@ body.no-scroll {
 
 #qr-reader__dashboard {
   display: none !important;
-}
-
-/* Viewfinder overlay */
-.qr-viewfinder {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 180px;
-  height: 180px;
-  pointer-events: none;
-  z-index: 10;
-}
-
-/* Viewfinder corner brackets */
-.qr-viewfinder::before,
-.qr-viewfinder::after,
-.qr-viewfinder .corner-bl,
-.qr-viewfinder .corner-br {
-  content: '';
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  border-color: #ffffff;
-  border-style: solid;
-  border-width: 0;
-}
-
-/* Top-left corner */
-.qr-viewfinder::before {
-  top: 0;
-  left: 0;
-  border-top-width: 3px;
-  border-left-width: 3px;
-  border-top-left-radius: 8px;
-}
-
-/* Top-right corner */
-.qr-viewfinder::after {
-  top: 0;
-  right: 0;
-  border-top-width: 3px;
-  border-right-width: 3px;
-  border-top-right-radius: 8px;
-}
-
-/* Bottom-left corner */
-.qr-viewfinder .corner-bl {
-  bottom: 0;
-  left: 0;
-  border-bottom-width: 3px;
-  border-left-width: 3px;
-  border-bottom-left-radius: 8px;
-}
-
-/* Bottom-right corner */
-.qr-viewfinder .corner-br {
-  bottom: 0;
-  right: 0;
-  border-bottom-width: 3px;
-  border-right-width: 3px;
-  border-bottom-right-radius: 8px;
 }
 
 /* Status Message - overlay at bottom */
