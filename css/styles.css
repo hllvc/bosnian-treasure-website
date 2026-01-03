@@ -96,6 +96,11 @@ main {
   position: relative;
   width: 100%;
   height: 100%;
+}
+
+/* Only enable 3D when flipping */
+.card.flipped .card-inner,
+.card.flipping .card-inner {
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
   transition: transform 0.6s ease;
@@ -115,11 +120,9 @@ main {
   height: 100%;
   border-radius: 1.5rem;
   overflow: hidden;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
 
-/* Card back (scanner) - rotated 180deg so it shows correctly when flipped */
+/* Card back (scanner) - hidden by default */
 .card-back {
   position: absolute;
   top: 0;
@@ -129,9 +132,24 @@ main {
   background: #1a1a1a;
   border-radius: 1.5rem;
   overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Only apply 3D flip properties when flipping */
+.card.flipped .card-front,
+.card.flipping .card-front {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card.flipped .card-back,
+.card.flipping .card-back {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   transform: rotateY(180deg);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .card-image {

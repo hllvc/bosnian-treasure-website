@@ -716,8 +716,12 @@ document.addEventListener('DOMContentLoaded', function() {
       cardBack.appendChild(qrScannerContainer);
     }
 
-    // Flip the card
+    // Start flip - add flipping first to enable 3D, then flipped to trigger animation
+    card.classList.add('flipping');
+    // Force reflow to ensure flipping styles are applied
+    card.offsetHeight;
     card.classList.add('flipped');
+
     isCardFlipped = true;
     activeFlippedCard = card;
     document.body.classList.add('scanning');
@@ -725,8 +729,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Disable swiper while flipped
     swiper.disable();
 
-    // After flip animation completes, start scanner
+    // After flip animation completes, clean up flipping class and start scanner
     setTimeout(function() {
+      card.classList.remove('flipping');
       startScanner();
     }, 650);
   }
@@ -790,19 +795,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     stopScanner();
 
-    // Flip card back
-    if (activeFlippedCard) {
-      activeFlippedCard.classList.remove('flipped');
+    var card = activeFlippedCard;
+
+    // Start unflip - add flipping class to keep 3D active during animation
+    if (card) {
+      card.classList.add('flipping');
+      card.classList.remove('flipped');
     }
     document.body.classList.remove('scanning');
 
     // Reset state
     isCardFlipped = false;
-    var card = activeFlippedCard;
     activeFlippedCard = null;
 
     // After flip animation completes, clean up
     setTimeout(function() {
+      if (card) {
+        card.classList.remove('flipping');
+      }
       // Move scanner container back to body
       if (qrScannerContainer) {
         document.body.appendChild(qrScannerContainer);
