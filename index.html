@@ -153,12 +153,39 @@
     </div>
   </div>
 
+  <!-- QR Scanner Button -->
+  <button id="qr-scanner-btn" class="qr-scanner-btn" aria-label="Skeniraj QR kod">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"></rect>
+      <rect x="14" y="3" width="7" height="7"></rect>
+      <rect x="3" y="14" width="7" height="7"></rect>
+      <rect x="14" y="14" width="3" height="3"></rect>
+      <line x1="21" y1="14" x2="21" y2="21"></line>
+      <line x1="14" y1="21" x2="21" y2="21"></line>
+    </svg>
+  </button>
+
+  <!-- QR Scanner Overlay -->
+  <div id="qr-overlay" class="qr-overlay">
+    <button id="qr-close-btn" class="close-btn" aria-label="Zatvori skener">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+    <div id="qr-reader" class="qr-reader"></div>
+    <div id="qr-status" class="qr-status"></div>
+  </div>
+
   <footer>
     <p>Made with <span class="heart">&#10084;</span> by <span class="authors">Adna, Iman & Aiša</span></p>
   </footer>
 
   <!-- Swiper JS -->
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+  <!-- QR Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <!-- Custom JS -->
   <script src="js/main.js"></script>

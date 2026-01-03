@@ -607,6 +607,239 @@ document.addEventListener('DOMContentLoaded', function() {
     isDraggingPagination = false;
   });
 
+  // =====================
+  // QR Code Scanner
+  // =====================
+
+  const qrScannerBtn = document.getElementById('qr-scanner-btn');
+  const qrOverlay = document.getElementById('qr-overlay');
+  const qrCloseBtn = document.getElementById('qr-close-btn');
+  const qrStatus = document.getElementById('qr-status');
+  let html5QrCode = null;
+  let isQrScanning = false;
+
+  // Valid card names for QR validation
+  const validCardNames = new Set(cardNames);
+
+  function extractHashFromUrl(url) {
+    try {
+      // Parse the URL to extract hash
+      const urlObj = new URL(url);
+      const hash = urlObj.hash;
+
+      if (!hash || hash.length <= 1) return null;
+
+      // Remove # and lowercase
+      const cardName = hash.slice(1).toLowerCase();
+
+      // Validate it's a known card name
+      if (validCardNames.has(cardName)) {
+        return cardName;
+      }
+
+      return null;
+    } catch (e) {
+      // If URL parsing fails, try direct hash extraction
+      const hashMatch = url.match(/#([a-zA-Z-]+)$/);
+      if (hashMatch) {
+        const cardName = hashMatch[1].toLowerCase();
+        if (validCardNames.has(cardName)) {
+          return cardName;
+        }
+      }
+      return null;
+    }
+  }
+
+  function showQrStatus(message, type) {
+    if (!qrStatus) return;
+    qrStatus.textContent = message;
+    qrStatus.className = 'qr-status' + (type ? ' ' + type : '');
+  }
+
+  function startScanner() {
+    if (isQrScanning) return;
+    if (!qrOverlay) return;
+
+    qrOverlay.classList.add('active');
+    document.body.classList.add('no-scroll');
+    showQrStatus('Usmjerite kameru prema QR kodu...');
+
+    // Disable swiper while scanning
+    swiper.disable();
+
+    // Initialize scanner if not already
+    if (!html5QrCode && typeof Html5Qrcode !== 'undefined') {
+      html5QrCode = new Html5Qrcode('qr-reader');
+    }
+
+    if (!html5QrCode) {
+      showQrStatus('Skener nije dostupan.', 'error');
+      return;
+    }
+
+    var config = {
+      fps: 10,
+      qrbox: { width: 250, height: 250 },
+      aspectRatio: 1.0
+    };
+
+    html5QrCode.start(
+      { facingMode: 'environment' },
+      config,
+      onScanSuccess,
+      onScanFailure
+    ).then(function() {
+      isQrScanning = true;
+    }).catch(function(err) {
+      console.error('QR Scanner error:', err);
+      showQrStatus('Nije moguće pristupiti kameri. Molimo dozvolite pristup.', 'error');
+    });
+  }
+
+  function stopScanner() {
+    if (html5QrCode && isQrScanning) {
+      html5QrCode.stop().then(function() {
+        isQrScanning = false;
+      }).catch(function(err) {
+        console.error('Error stopping scanner:', err);
+        isQrScanning = false;
+      });
+    }
+
+    if (qrOverlay) {
+      qrOverlay.classList.remove('active');
+    }
+    document.body.classList.remove('no-scroll');
+    showQrStatus('');
+
+    // Re-enable swiper
+    swiper.enable();
+  }
+
+  function onScanSuccess(decodedText) {
+    // Extract card name from scanned URL
+    var cardName = extractHashFromUrl(decodedText);
+
+    if (cardName) {
+      // Capitalize first letter for display
+      var displayName = cardName.charAt(0).toUpperCase() + cardName.slice(1);
+      displayName = displayName.replace('-', ' ');
+      showQrStatus('Pronađeno: ' + displayName, 'success');
+
+      // Vibrate for feedback if supported
+      if (navigator.vibrate) {
+        navigator.vibrate(100);
+      }
+
+      // Stop scanner and navigate after brief delay
+      setTimeout(function() {
+        stopScanner();
+
+        // Set hash and navigate
+        window.location.hash = cardName;
+
+        // Navigate from current position to target
+        var targetIndex = cardNames.indexOf(cardName);
+        if (targetIndex !== -1) {
+          var startIndex = swiper.activeIndex;
+
+          // If already at target, just pulse
+          if (startIndex === targetIndex) {
+            var activeSlide = swiper.slides[swiper.activeIndex];
+            if (activeSlide) {
+              var card = activeSlide.querySelector('.card');
+              if (card) {
+                card.classList.add('deep-linked');
+                setTimeout(function() {
+                  card.classList.remove('deep-linked');
+                }, 1800);
+              }
+            }
+            return;
+          }
+
+          // Navigate to target with animation
+          var direction = targetIndex > startIndex ? 1 : -1;
+          var totalSteps = Math.abs(targetIndex - startIndex);
+          var currentIndex = startIndex;
+          var stepCount = 0;
+
+          function easeInOutQuad(t) {
+            return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+          }
+
+          function stepToNext() {
+            currentIndex += direction;
+            stepCount++;
+
+            var progress = stepCount / totalSteps;
+            var easedProgress = easeInOutQuad(progress);
+            var prevEased = easeInOutQuad((stepCount - 1) / totalSteps);
+            var stepSpeed = easedProgress - prevEased;
+
+            var minDelay = 100;
+            var maxDelay = 200;
+            var delay = maxDelay - (stepSpeed * totalSteps * (maxDelay - minDelay));
+            var slideSpeed = 150 + (1 - stepSpeed * totalSteps) * 100;
+
+            swiper.slideTo(currentIndex, slideSpeed);
+
+            if (currentIndex !== targetIndex) {
+              setTimeout(stepToNext, delay);
+            } else {
+              // Final card - add visual feedback
+              setTimeout(function() {
+                var activeSlide = swiper.slides[swiper.activeIndex];
+                if (activeSlide) {
+                  var card = activeSlide.querySelector('.card');
+                  if (card) {
+                    card.classList.add('deep-linked');
+                    setTimeout(function() {
+                      card.classList.remove('deep-linked');
+                    }, 1800);
+                  }
+                }
+              }, 200);
+            }
+          }
+
+          setTimeout(stepToNext, 300);
+        }
+      }, 500);
+    } else {
+      showQrStatus('Nevažeći QR kod. Skenirajte Bosansko Blago QR kod.', 'error');
+    }
+  }
+
+  function onScanFailure(error) {
+    // Ignore scan failures (no QR code found yet)
+  }
+
+  // Event Listeners
+  if (qrScannerBtn) {
+    qrScannerBtn.addEventListener('click', startScanner);
+  }
+
+  if (qrCloseBtn) {
+    qrCloseBtn.addEventListener('click', stopScanner);
+  }
+
+  if (qrOverlay) {
+    qrOverlay.addEventListener('click', function(e) {
+      if (e.target === qrOverlay) {
+        stopScanner();
+      }
+    });
+  }
+
+  // Close QR scanner on escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && qrOverlay && qrOverlay.classList.contains('active')) {
+      stopScanner();
+    }
+  });
+
   // Expose swiper instance for debugging
   window.bosnianTreasureSwiper = swiper;
 });
